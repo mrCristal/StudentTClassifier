@@ -5,7 +5,8 @@ from scipy.optimize import minimize
 
 
 class GaussianProcessRegression(BaseProcess):
-    def __init__(self, kernel: BaseKernel, noise_scale: float = 0.5, X: np.ndarray = None, y: np.ndarray = None) -> None:
+    def __init__(self, kernel: BaseKernel, noise_scale: float = 0.5, X: np.ndarray = None,
+                 y: np.ndarray = None) -> None:
         super().__init__(kernel=kernel, noise_scale=noise_scale, X=X, y=y)
 
     def get_neg_log_ML(self) -> float:
@@ -19,7 +20,7 @@ class GaussianProcessRegression(BaseProcess):
         neg_ML = 0.5 * (y.T @ K_y_inv @ y + log_det_K_y + n * np.log(2 * np.pi))
         return neg_ML.item()
 
-    def get_sample(self, X:np.ndarray) -> np.ndarray:
+    def get_sample(self, X: np.ndarray) -> np.ndarray:
         mean, cov = self.get_predictions(X)
         mean = mean.flatten()
         return np.random.multivariate_normal(mean, cov)
@@ -56,17 +57,48 @@ class GaussianProcessRegression(BaseProcess):
         y = self._y
         K_inv = np.linalg.inv(K)
         a = K_inv @ y
-        grad = 0.5 * np.trace((a@a.T - K_inv) @ covariance_gradient)
+        grad = 0.5 * np.trace((a @ a.T - K_inv) @ covariance_gradient)
         return grad.item()
 
-    def set_params(self, amplitude, length_scale, noise_scale):
-        self.kernel.set_parameters(amplitude=amplitude, length_scale=length_scale)
-        self.noise_scale = noise_scale
+    def optimise_params(self, number_of_restarts: int, verbose=False) -> None:
+        def get_neg_LML(params: np.ndarray) -> float:
+            self.set_log_params(log_amplitude=params[0].item(), log_length_scale=params[1].item(),
+                                log_noise_scale=params[2].item())
+            return self.get_neg_log_ML()
 
-    def set_log_params(self, log_amplitude, log_length_scale, log_noise_scale):
-        self.kernel.set_log_parameters(log_amplitude=log_amplitude, log_length_scale=log_length_scale)
-        self.log_noise_scale = log_noise_scale
+        def get_neg_LML_gradients(params: np.ndarray) -> np.ndarray:
+            self.set_log_params(log_amplitude=params[0].item(), log_length_scale=params[1].item(),
+                                log_noise_scale=params[2].item())
+            return self.get_neg_log_ML_gradients()
 
+        parameter_sets = [self.kernel.log_amplitude, self.kernel.log_length_scale, self.log_noise_scale]
 
+        if number_of_restarts > 1:
+            for _ in range(2, number_of_restarts + 1):
+                log_amplitude_sample = np.random.uniform(low=-4, high=4)
+                log_length_scale_sample = np.random.uniform(low=-4, high=3)
+                log_noise_scale_sample = np.random.uniform(low=-4, high=4)
+                parameter_sets.append([log_amplitude_sample, log_length_scale_sample, log_noise_scale_sample])
+        parameter_sets = np.asarray(parameter_sets)
+        best_parameter_set = parameter_sets[0]  # i.e. inital params
+        best_NLML_value = get_neg_LML(best_parameter_set)
+        for parameter_set in parameter_sets:
+            self._print('Optimising with {}'.format(parameter_set), verbose)
+            try:
+                result = minimize(fun=get_neg_LML, x0=parameter_set, jac=get_neg_LML_gradients, method='BFGS',
+                                  options={'disp': verbose})
+            except OverflowError as e:
+                self._print('Overflow error, moving to the next set\n', verbose)
+                continue
+            optimised_parameter_set = result.x
+            self._print('Optimised parameters {}'.format(optimised_parameter_set), verbose)
+            self._print('NLML value {}'.format(result.fun), verbose)
 
+            if result.fun < best_NLML_value:
+                best_parameter_set = optimised_parameter_set
+                best_NLML_value = result.fun
 
+        self.set_log_params(log_amplitude=best_parameter_set[0].item(), log_length_scale=best_parameter_set[1].item(),
+                            log_noise_scale=best_parameter_set[2].item())
+        self._print('Final NLML value {} \nand optimised parameters {}'.format(best_NLML_value, best_parameter_set),
+                    verbose)
