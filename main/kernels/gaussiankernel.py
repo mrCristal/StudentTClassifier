@@ -19,6 +19,12 @@ class GaussianKernel(BaseKernel):
 
         return np.asarray([dK_damplitude, dK_dlength_scale])
 
+    def get_dK_dlength_scale(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
+        d2 = self._get_distance(X, X_) ** 2
+        K = self.get_cov(X, X_)
+        dK_dlength_scale = self.amplitude_squared * self.length_scale ** (-3) * d2 @ K
+        return dK_dlength_scale
+
     @property
     def type(self) -> str:
         return 'Gaussian'

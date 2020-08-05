@@ -11,6 +11,12 @@ class OUKernel(BaseKernel):
         l_s = self.length_scale
         return a2 * np.exp(-1 / l_s * self._get_distance(X, X_))
 
+    def get_dK_dlength_scale(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
+        d = self._get_distance(X, X_)
+        K = self.get_cov(X, X_)
+        dK_dlength_scale = d / (self.length_scale ** 2) @ K
+        return dK_dlength_scale
+
     def get_gradients(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
         K = self.get_cov(X, X_)
         d = self._get_distance(X, X_)

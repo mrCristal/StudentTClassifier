@@ -24,6 +24,13 @@ class Matern52Kernel(BaseKernel):
 
         return np.asarray([dK_damplitude, dK_dlength_scale])
 
+    def get_dK_dlength_scale(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
+        d = self._get_distance(X, X_)
+        l_s = self.length_scale
+        m = sr(5) * d / l_s
+        dK_dlength_scale = d ** 2 * self.amplitude_squared * (5 * l_s + 5 ** 1.5 * d) * np.exp(-m) / (3 * l_s ** 4)
+        return dK_dlength_scale
+
     @property
     def type(self) -> str:
         return 'Matern 5/2'

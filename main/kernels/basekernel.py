@@ -29,7 +29,7 @@ class BaseKernel(metaclass=abc.ABCMeta):
 
     @log_amplitude.setter
     def log_amplitude(self, value: float) -> None:
-        value = np.clip(value, -4, 3)[0]
+        value = np.clip(value, -4, 3).item()
         self._log_amplitude = value
 
     @property
@@ -46,7 +46,7 @@ class BaseKernel(metaclass=abc.ABCMeta):
 
     @log_length_scale.setter
     def log_length_scale(self, value: float) -> None:
-        value = np.clip(value, -4, 3)[0]
+        value = np.clip(value, -4, 3).item()
         self._log_length_scale = value
 
     @property
@@ -67,6 +67,13 @@ class BaseKernel(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_gradients(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
         pass
+
+    @abc.abstractmethod
+    def get_dK_dlength_scale(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
+        pass
+
+    def get_dk_damplitude(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
+        return self.get_cov(X, X_) / self.amplitude * 2
 
     @property
     @abc.abstractmethod
