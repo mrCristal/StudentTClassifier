@@ -7,7 +7,7 @@ class BaseProcess(metaclass=abc.ABCMeta):
     def __init__(self, kernel: BaseKernel, noise_scale: float = 0.5, X: np.ndarray = None,
                  y: np.ndarray = None) -> None:
         self.kernel = kernel
-        self.noise_scale = noise_scale
+        self.log_noise_scale = np.log(noise_scale)
         if X and y:
             self.initialise_data(X, y)
         elif not (X and y):
@@ -47,11 +47,11 @@ class BaseProcess(metaclass=abc.ABCMeta):
         self.set_covariance()
 
     @abc.abstractmethod
-    def get_neg_log_ML(self) -> float:
+    def get_neg_log_ML(self, **kwargs) -> float:
         pass
 
     @abc.abstractmethod
-    def get_neg_log_ML_gradients(self) -> np.ndarray:
+    def get_neg_log_ML_gradients(self, **kwargs) -> np.ndarray:
         pass
 
     @abc.abstractmethod
@@ -63,19 +63,23 @@ class BaseProcess(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_predictions(self, X_) -> tuple:
+    def get_predictions(self, X_: np.ndarray = None) -> tuple:
         pass
 
-    def set_params(self, amplitude: float, length_scale: float, noise_scale: float) -> None:
-        self.kernel.set_parameters(amplitude=amplitude, length_scale=length_scale)
-        self.noise_scale = noise_scale
+    @abc.abstractmethod
+    def set_params(self, **kwargs) -> None:
+        pass
 
-    def set_log_params(self, log_amplitude: float, log_length_scale: float, log_noise_scale: float) -> None:
-        self.kernel.set_log_parameters(log_amplitude=log_amplitude, log_length_scale=log_length_scale)
-        self.log_noise_scale = log_noise_scale
+    @abc.abstractmethod
+    def set_log_params(self, **kwargs) -> None:
+        pass
 
     @abc.abstractmethod
     def evaluate_neg_log_ML_gradient(self, covariance_gradient: np.ndarray) -> float:
+        pass
+
+    @abc.abstractmethod
+    def get_std(self, X: np.ndarray = None) -> np.ndarray:
         pass
 
     def get_dK_y_dnoise(self) -> np.ndarray:
@@ -87,7 +91,7 @@ class BaseProcess(metaclass=abc.ABCMeta):
 
     @noise_scale.setter
     def noise_scale(self, value: float) -> None:
-        self._log_noise_scale = np.log(value)
+        self.log_noise_scale = np.log(value)
 
     @property
     def log_noise_scale(self) -> float:
@@ -96,7 +100,7 @@ class BaseProcess(metaclass=abc.ABCMeta):
     @log_noise_scale.setter
     def log_noise_scale(self, value: float) -> None:
         value = np.clip(value, -4, 3).item()
-        self.log_noise_scale = value
+        self._log_noise_scale = value
 
     @staticmethod
     def _print(string: str, verbose: bool) -> None:
