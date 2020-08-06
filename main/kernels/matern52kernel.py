@@ -12,7 +12,8 @@ class Matern52Kernel(BaseKernel):
         l_s = self.length_scale
         d = self._get_distance(X, X_)
         m = sr(5) * d / l_s
-        return a2 * (1 + m + m ** 2 * 1 / 3) @ np.exp(-m)
+        m2 = 5 / 3 * d ** 2 / (l_s ** 2)
+        return a2 * (1 + m + m2) * np.exp(-m)
 
     def get_gradients(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
         K = self.get_cov(X, X_)
