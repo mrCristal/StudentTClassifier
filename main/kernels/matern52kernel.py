@@ -12,7 +12,7 @@ class Matern52Kernel(BaseKernel):
 
     def get_cov(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
         """
-        Returns the covariance as given by the Gaussian (RBF) algorithm
+        Returns the covariance as given by the Matern algorithm
         :param X: n x p np.ndarray, data points where the covariance should be evaluated
         :param X_: n x p np.ndarray, data points where the covariance should be evaluated
         :return: n x n np.ndarray, covariance matrix
@@ -23,15 +23,6 @@ class Matern52Kernel(BaseKernel):
         m = sr(5) * d / l_s
         m2 = 5 / 3 * d ** 2 / (l_s ** 2)
         return a2 * (1 + m + m2) * np.exp(-m)
-
-    def get_gradients(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
-        """
-        Returns the gradients of the covariance function w.r.t parameters at for the given data points
-        :param X: n x p np.ndarray, data points where the gradient should be evaluated
-        :param X_: n x p np.ndarray, data points where the gradient should be evaluated
-        :return: n x n np.ndarray, evaluated gradient
-        """
-        return np.asarray([self.get_dk_damplitude(X, X_), self.get_dK_dlength_scale(X, X_)])
 
     def get_dK_dlength_scale(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
         """
