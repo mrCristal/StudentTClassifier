@@ -3,15 +3,28 @@ import numpy as np
 
 
 class BaseKernel(metaclass=abc.ABCMeta):
+    """
+    Base class for the covariance functions
+    """
     def __init__(self, amplitude: float, length_scale: float) -> None:
         self.amplitude = amplitude
         self.length_scale = length_scale
 
     def set_log_parameters(self, log_amplitude: float, log_length_scale: float) -> None:
+        """
+        Sets the new log parameters
+        Note that only certain values are accepted for each parameter
+        :return: None
+        """
         self.log_amplitude = log_amplitude
         self.log_length_scale = log_length_scale
 
     def set_parameters(self, amplitude: float, length_scale: float) -> None:
+        """
+        Sets the new parameters
+        Note that only certain values are accepted for each parameter
+        :return: None
+        """
         self.amplitude = amplitude
         self.length_scale = length_scale
 
@@ -29,8 +42,7 @@ class BaseKernel(metaclass=abc.ABCMeta):
 
     @log_amplitude.setter
     def log_amplitude(self, value: float) -> None:
-        value = np.clip(value, -4, 3).item()
-        self._log_amplitude = value
+        self._log_amplitude = np.clip(value, -4, 3).item()
 
     @property
     def length_scale(self) -> float:
@@ -73,6 +85,12 @@ class BaseKernel(metaclass=abc.ABCMeta):
         pass
 
     def get_dk_damplitude(self, X: np.ndarray, X_: np.ndarray) -> np.ndarray:
+        """
+        Returns the gradient of the covraince function w.r.t. the current amplitude
+        :param X: n x p np.ndarray, data points where the gradient should be evaluated
+        :param X_: n x p np.ndarray, data points where the gradient should be evaluated
+        :return: n x np.ndarray, evaluated gradient
+        """
         return self.get_cov(X, X_) / self.amplitude * 2
 
     @property
