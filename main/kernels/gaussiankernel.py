@@ -3,6 +3,9 @@ import numpy as np
 
 
 class GaussianKernel(BaseKernel):
+    """
+    Class implementing the Gaussian kernel algorithm
+    """
     def __init__(self, amplitude: float, length_scale: float) -> None:
         super().__init__(amplitude=amplitude, length_scale=length_scale)
 
