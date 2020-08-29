@@ -26,7 +26,7 @@ class BaseRegressionProcess(metaclass=abc.ABCMeta):
     def initialise_data(self, X: np.ndarray, y: np.ndarray) -> None:
         X = np.asarray(X)
         y = np.asarray(y)
-        if not self._data_is_valid(X, y):
+        if not self.data_is_valid(X, y):
             raise ValueError('The passed in data is of invalid format, {X}\n{y}'.format(X=X, y=y))
 
         self.X = X
