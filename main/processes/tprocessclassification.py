@@ -280,6 +280,7 @@ class TProcessClassification:
         :param verbose: bool, specifies whether or not to print updates of inference process
         :return: k x 1 np.ndarray, array of probabilities of y = 1 given X_
         """
+        n_samplers = 3
         if X_ is None:
             X_ = self.X
         f_max = self._get_f_at_mode()
@@ -288,8 +289,8 @@ class TProcessClassification:
                           'path_len': 5,
                           'step_size': 0.1,
                           'negate': True}
-        samplers = [HMC(starting_position=self.sample(f_max), **sampler_kwargs) for _ in range(2)]
-        for i in range(2):
+        samplers = [HMC(starting_position=self.sample(f_max), **sampler_kwargs) for _ in range(n_samplers)]
+        for i in range(n_samplers):
             self._print(f'Warming up chain nr {i + 1}', verbose)
             samplers[i].estimate()
 
