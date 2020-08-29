@@ -9,7 +9,7 @@ class HamiltonMCMC(BaseMCMC):
     MAX_ITERATIONS = 20000
 
     def __init__(self, negative_log_posterior: Callable, jacobian: Callable, starting_position: ndarray, path_len=2,
-                 step_size=0.5, n_samples: int = 5000, verbose: bool = False, **nlp_kwargs):
+                 step_size=0.5, n_samples: int = 8000, verbose: bool = False, **nlp_kwargs):
         """
         A Hamiltonian MCMC sampler.
         :parameter negative_log_posterior: callable to evaluate the negative log posterior given a sample
