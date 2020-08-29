@@ -1,6 +1,8 @@
 from main.processes.baseregressionprocess import BaseRegressionProcess
 from main.kernels.basekernel import BaseKernel
 import numpy as np
+from hyperopt import hp, Trials, fmin, tpe
+from collections import OrderedDict
 from scipy.optimize import minimize
 from scipy.special import digamma as Di, gammaln as lG
 
@@ -25,7 +27,7 @@ class TProcessRegression(BaseRegressionProcess):
 
     @log_dof.setter
     def log_dof(self, value: float) -> None:
-        value = np.clip(value, np.log(3), np.log(70)).item()
+        value = np.clip(value, np.log(3), np.log(9e6)).item()
         self._log_dof = value
 
     @property
@@ -134,7 +136,7 @@ class TProcessRegression(BaseRegressionProcess):
         v2 = v - 2
         d_m = y.T @ K_y_inv @ y  # mahalnobis distance (slight abuse of names)
         sd_m = 1 + d_m / v2
-        dL_dv = 0.5 * (n / v2 + np.log(sd_m) - (v+n) * d_m/(v2**2 * sd_m)) + Di(v/2) - Di((v+n)/2)
+        dL_dv = 0.5 * (n / v2 + np.log(sd_m) - (v + n) * d_m / (v2 ** 2 * sd_m)) + Di(v / 2) - Di((v + n) / 2)
         return dL_dv.item()
 
     def evaluate_neg_log_ML_gradient(self, covariance_gradient: np.ndarray) -> float:
@@ -181,7 +183,7 @@ class TProcessRegression(BaseRegressionProcess):
         K11 = k(X_, X_)
 
         mean = K12 @ K22_inv @ y
-        scale = (v + y.T @ K22_inv @ y)/(v + N2) * (K11 - K12 @ K22_inv @ K21)
+        scale = (v + y.T @ K22_inv @ y) / (v + N2) * (K11 - K12 @ K22_inv @ K21)
         v_ = v + N2
         return mean, scale, v_
 
@@ -196,19 +198,52 @@ class TProcessRegression(BaseRegressionProcess):
         u = np.random.chisquare(df=v)
         mvn_mean = np.zeros((1, N)).flatten()
         Y = np.random.multivariate_normal(mvn_mean, scale)
-        sample = Y / np.sqrt(u/v) + mean.flatten()
-        sample = sample.reshape(N,)
+        sample = Y / np.sqrt(u / v) + mean.flatten()
+        sample = sample.reshape(N, )
         return sample
 
-    def optimise_params(self, number_of_restarts: int, verbose=False) -> None:
+    def optimise_params(self, number_of_restarts: int, verbose: bool = False, with_BO: bool = True) -> None:
         """
-        Optimises the hyper parameters with respect to the negative log marginal likelihood using the gradients
-        Uses the BFGS algorithm from scipy
+        Optimises the hyper parameters with respect to the negative log marginal likelihood via eitehr BO or BFGS
+        Uses the gradients for the BFGS algorithm from scipy
+        :param number_of_restarts: int, the number of times to run
+        :param verbose: bool, specifies if to output information regarding progression
+        :return None
+        """
+
+        if with_BO:
+            self._BO(number_of_restarts, verbose)
+        else:
+            self._BFGS(number_of_restarts, verbose)
+
+    def _BO(self, n_iterations: int, verbose: bool) -> None:
+        """
+        Optimises the hyper parameters via the BO algortithm
+        :param n_iterations: int, the number of times to run the BO algorithm
+        :param verbose: bool, specifies if to output information regarding the progression of the BO algorithm
+        :return:
+        """
+        space = OrderedDict([('log_amplitude', hp.uniform('log_amplitude', -4, 3)),
+                             ('log_length_scale', hp.uniform('log_length_scale', -4, 3)),
+                             ('log_noise_scale', hp.uniform('log_noise_scale', -4, 3)),
+                             ('log_dof', hp.uniform('log_dof', np.log(3), np.log(9e6)))
+                             ])
+
+        def objective(params):
+            return self.get_neg_log_ML(**params)
+
+        best_params = fmin(objective, space, trials=Trials(), algo=tpe.suggest, max_evals=n_iterations, verbose=verbose)
+        self.set_log_params(**best_params)
+
+    def _BFGS(self, number_of_restarts: int, verbose: bool) -> None:
+        """
+        Optimises the hyper parameters with respect to the negative log marginal likelihood via the BFGS algorithm
         Runs the algorithm a number of times where starting values for hyper parameters are sampled anew
         :param number_of_restarts: int, the number of times to run the BFGS algorithm
         :param verbose: bool, specifies if to output information regarding the progression of the BFGS algorithm
         :return None
         """
+
         def get_neg_LML(params: np.ndarray) -> float:
             return self.get_neg_log_ML(params[0].item(), params[1].item(), params[2].item())
 
@@ -222,7 +257,7 @@ class TProcessRegression(BaseRegressionProcess):
                 log_amplitude_sample = np.random.uniform(low=-3, high=3)
                 log_length_scale_sample = np.random.uniform(low=-3, high=3)
                 log_noise_scale_sample = np.random.uniform(low=-3, high=3)
-                log_dof_sample = np.random.uniform(low=np.log(3), high=np.log(70))
+                log_dof_sample = np.random.uniform(low=np.log(3), high=np.log(9e6))
                 parameter_sets.append([log_amplitude_sample, log_length_scale_sample, log_noise_scale_sample,
                                        log_dof_sample])
         parameter_sets = np.asarray(parameter_sets)
@@ -262,7 +297,7 @@ class TProcessRegression(BaseRegressionProcess):
         """
         v = self.dof
         scale = self.get_predictions(X)[1]
-        cov = v/(v-2) * scale
+        cov = v / (v - 2) * scale
         var = cov.diagonal()
         std = np.sqrt(var)
         return std
