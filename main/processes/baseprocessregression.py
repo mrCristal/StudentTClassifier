@@ -3,7 +3,7 @@ from main.kernels.basekernel import BaseKernel
 import abc
 
 
-class BaseRegressionProcess(metaclass=abc.ABCMeta):
+class BaseProcessRegression(metaclass=abc.ABCMeta):
     def __init__(self, kernel: BaseKernel, noise_scale: float = 0.5, X: np.ndarray = None,
                  y: np.ndarray = None) -> None:
         self.kernel = kernel
