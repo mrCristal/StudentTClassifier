@@ -1,4 +1,4 @@
-from main.utils.basemcmc import BaseMCMC
+from main.samplers.basemcmc import BaseMCMC
 from typing import Callable
 from numpy.random import uniform
 from numpy import ndarray, mean, asarray, log

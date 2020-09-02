@@ -1,7 +1,7 @@
-from main.utils.basemcmc import BaseMCMC
+from main.samplers.basemcmc import BaseMCMC
 from typing import Callable, Tuple
 from scipy.stats import norm
-from numpy import ndarray, mean, asarray, min, max, sum, log, copy, exp
+from numpy import ndarray, mean, asarray, min, max, sum, log, copy
 from numpy.random import uniform
 
 
