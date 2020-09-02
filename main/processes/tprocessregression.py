@@ -1,4 +1,4 @@
-from main.processes.baseregressionprocess import BaseRegressionProcess
+from main.processes.baseprocessregression import BaseProcessRegression
 from main.kernels.basekernel import BaseKernel
 import numpy as np
 from hyperopt import hp, Trials, fmin, tpe
@@ -7,7 +7,7 @@ from scipy.optimize import minimize
 from scipy.special import digamma as Di, gammaln as lG
 
 
-class TProcessRegression(BaseRegressionProcess):
+class TProcessRegression(BaseProcessRegression):
     def __init__(self, kernel: BaseKernel, dof: float = 3, noise_scale: float = 0.5, X: np.ndarray = None,
                  y: np.ndarray = None) -> None:
         """

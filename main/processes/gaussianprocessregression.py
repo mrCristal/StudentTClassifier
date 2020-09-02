@@ -1,10 +1,10 @@
-from main.processes.baseregressionprocess import BaseRegressionProcess
+from main.processes.baseprocessregression import BaseProcessRegression
 from main.kernels.basekernel import BaseKernel
 import numpy as np
 from scipy.optimize import minimize
 
 
-class GaussianProcessRegression(BaseRegressionProcess):
+class GaussianProcessRegression(BaseProcessRegression):
     def __init__(self, kernel: BaseKernel, noise_scale: float = 0.5, X: np.ndarray = None,
                  y: np.ndarray = None) -> None:
         """
