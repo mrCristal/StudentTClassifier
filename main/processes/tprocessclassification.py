@@ -4,7 +4,7 @@ from hyperopt import hp, Trials, fmin, tpe
 from collections import OrderedDict
 from numpy.linalg import det, inv
 from numpy import log, sum
-from main.utils.hamiltonmcmc import HamiltonMCMC as HMC
+from main.samplers.hamiltonmcmc import HamiltonMCMC as HMC
 from scipy.special import loggamma as lG
 
 
