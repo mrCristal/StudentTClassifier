@@ -1,4 +1,4 @@
-from main.processes.baseregressionprocess import BaseRegressionProcess
+from main.processes.baseprocessregression import BaseProcessRegression
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -7,7 +7,7 @@ class Plotter:
     """
     Simple plotter for the BaseRegressionProcess
     """
-    def __init__(self, process: BaseRegressionProcess):
+    def __init__(self, process: BaseProcessRegression):
         self.process = process
 
     def plot(self, n_samples: int = 0, with_y=False) -> None:
@@ -35,7 +35,6 @@ class Plotter:
             plt.fill_between(xx, mean - 3 * std, mean + 3 * std, alpha=0.125, color='gray')
             plt.fill_between(xx, mean - 2 * std, mean + 2 * std, alpha=0.25, color='gray')
             plt.fill_between(xx, mean - 1 * std, mean + 1 * std, alpha=0.5, color='gray')
-            plt.show()
 
         elif self.process.X.shape[1] > 1:
             xx = np.linspace(0, self.process.X.shape[0]-1, self.process.X.shape[0])
@@ -46,15 +45,14 @@ class Plotter:
             #print(len(xx))
             for _ in range(n_samples):
                 plt.plot(self.process.get_sample(self.process.X))
-            plt.plot(xx, mean, c='red')
+            plt.plot(xx, mean, c='red', label='Predicted Mean')
             plt.plot(xx, mean + 3 * std, c='black')
             plt.plot(xx, mean - 3 * std, c='black')
             plt.fill_between(xx, mean - 3 * std, mean + 3 * std, alpha=0.125, color='gray')
             plt.fill_between(xx, mean - 2 * std, mean + 2 * std, alpha=0.25, color='gray')
             plt.fill_between(xx, mean - 1 * std, mean + 1 * std, alpha=0.5, color='gray')
             if with_y:
-                plt.scatter(xx, self.process.y, c='blue', marker='+', s=150)
-            plt.show()
+                plt.scatter(xx, self.process.y, c='blue', marker='+', s=150, label='Target value')
 
         else:
             xx = self.process.X
@@ -64,17 +62,18 @@ class Plotter:
             std = std.flatten()
             for _ in range(n_samples):
                 plt.plot(xx, self.process.get_sample(xx.reshape((-1, 1))))
-            plt.plot(xx, mean, c='red')
+            plt.plot(xx, mean, c='red', label='Predicted Mean')
             plt.plot(xx, mean + 3 * std, c='black')
             plt.plot(xx, mean - 3 * std, c='black')
             plt.fill_between(xx, mean - 3 * std, mean + 3 * std, alpha=0.125, color='gray')
             plt.fill_between(xx, mean - 2 * std, mean + 2 * std, alpha=0.25, color='gray')
             plt.fill_between(xx, mean - 1 * std, mean + 1 * std, alpha=0.5, color='gray')
             if with_y:
-                plt.scatter(xx, self.process.y, c='blue', marker='+', s=150)
-            plt.show()
+                plt.scatter(xx, self.process.y, c='blue', marker='+', s=150, label='Target value')
+        plt.legend(loc='best')
+        plt.show()
 
-    def __call__(self, process: BaseRegressionProcess) -> None:
+    def __call__(self, process: BaseProcessRegression) -> None:
         """
         Updates the process attribute
         :param process: BaseRegressionProcess, the new regression process instance to use
